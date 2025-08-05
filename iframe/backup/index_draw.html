@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Image Synthesis Request with Drawing Board</title>
+		<style>
+			canvas {
+				border: 1px solid black;
+			}
+			#imageResult {
+				display: none;
+			}
+		</style>
+		<script>
+			let taskId = null;
+			let canvas, ctx;
+
+			document.addEventListener('DOMContentLoaded', function () {
+				canvas = document.getElementById('drawingCanvas');
+				ctx = canvas.getContext('2d');
+				canvas.width = 500;
+				canvas.height = 500;
+				canvas.addEventListener('mousedown', mouseDown, false);
+				canvas.addEventListener('mouseup', mouseUp, false);
+				canvas.addEventListener('mousemove', mouseMove, false);
+			});
+
+			function mouseDown(e) {
+				e.preventDefault();
+				ctx.beginPath();
+				ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+				return false;
+			}
+
+			function mouseUp() {
+				ctx.closePath();
+			}
+
+			function mouseMove(e) {
+				if (ctx) {
+					ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+					ctx.strokeStyle = 'black';
+					ctx.lineWidth = 2;
+					ctx.stroke();
+				}
+				return false;
+			}
+
+			function clearCanvas() {
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+			}
+
+			function saveCanvas() {
+				const image = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream');
+				const link = document.createElement('a');
+				link.download = 'drawing.png';
+				link.href = image;
+				link.click();
+			}
+
+			async function sendPaintingRequest() {
+				try {
+					const prompt = document.getElementById('promptInput').value;
+					const response = await fetch('https://dashscope-aliyuncs.mirror.soraharu.com/api/v1/services/aigc/image2image/image-synthesis/', {
+						method: 'POST',
+						headers: {
+							'X-DashScope-Async': 'enable',
+							'Authorization': 'Bearer sk-cdcc8f184aa344b7b3554fa9f7fba3a2',
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							model: 'wanx-sketch-to-image-lite',
+							input: {
+								sketch_image_url: 'https://huarong123.oss-cn-hangzhou.aliyuncs.com/image/%E6%B6%82%E9%B8%A6%E8%8D%89%E5%9B%BE.png',
+								prompt: prompt,
+							},
+							parameters: {
+								size: '768*768',
+								n: 2,
+								sketch_weight: 3,
+								style: '<3d cartoon>',
+							},
+						}),
+					});
+					const responseJson = await response.json();
+					console.log(responseJson);
+					taskId = responseJson.output.task_id;
+
+					alert('绘画请求已发送，任务ID为：' + taskId);
+				} catch (error) {
+					console.error('Error:', error);
+				}
+			}
+
+			async function checkResult() {
+				if (!taskId) {
+					alert('请先发送绘画请求');
+					return;
+				}
+				try {
+					const response = await fetch(`https://dashscope-aliyuncs.mirror.soraharu.com/api/v1/tasks/${taskId}`, {
+						method: 'GET',
+						headers: {
+							'Authorization': 'Bearer sk-cdcc8f184aa344b7b3554fa9f7fba3a2',
+						},
+					});
+
+					const responseJson = await response.json();
+					console.log(responseJson);
+					const task_status = responseJson.output.task_status;
+
+					if (responseJson.output && responseJson.output.results && responseJson.output.results.length > 0) {
+						const task_url = responseJson.output.results[0].url;
+						const link = document.createElement('a');
+						link.href = task_url;
+						link.download = 'generated_image.png';
+						document.body.appendChild(link);
+						link.click();
+						document.body.removeChild(link);
+						document.getElementById('imageResult').src = task_url;
+						document.getElementById('imageResult').style.display = 'block';
+						alert('绘画完成，图片已自动下载');
+						console.log(task_url);
+					} else {
+						alert('绘画还未完成，当前状态：' + task_status);
+						console.log(task_status);
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					alert('无法获取绘画结果，请检查任务ID或网络连接');
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<input type="text" id="promptInput" placeholder="Enter your prompt here" />
+		<button onclick="sendPaintingRequest()">发送绘画请求</button>
+		<button onclick="checkResult()">查询结果</button>
+		<canvas id="drawingCanvas"></canvas>
+		<button onclick="clearCanvas()">清空画布</button>
+		<button onclick="saveCanvas()">保存涂鸦</button>
+		<img id="imageResult" alt="Generated Image" />
+	</body>
+</html>

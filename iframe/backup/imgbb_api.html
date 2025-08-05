@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imgbb Image Uploader</title>
+<script>
+async function uploadImage() {
+    const apiKey = '93ecff6c249ca51c6ee0fb5a4b7d7c8a'; 
+    const imageFile = document.getElementById('imageInput').files[0];
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    try {
+        const response = await fetch(`https://api.imgbb.com/1/upload?expiration=600&key=${apiKey}`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+            document.getElementById('output').innerHTML = `
+                <img src="${data.data.url}" alt="Uploaded Image" />
+                <p>Viewer URL: <a href="${data.data.url_viewer}" target="_blank">${data.data.url_viewer}</a></p>
+                <p>Display URL: <a href="${data.data.display_url}" target="_blank">${data.data.display_url}</a></p>
+                <p>Width: ${data.data.width}</p>
+                <p>Height: ${data.data.height}</p>
+                <p>Size: ${data.data.size}</p>
+                <p>Uploaded at: ${data.data.time}</p>
+                <p>Expiration: ${data.data.expiration}</p>
+                <p>Delete URL: <a href="${data.data.delete_url}" target="_blank">Delete Image</a></p>
+            `;
+            console.log(data);
+        } else {
+            console.error('Error:', data.error || 'Unknown error');
+        }
+    } catch (error) {
+        console.error('Upload failed:', error);
+    }
+}
+</script>
+</head>
+<body>
+<h1>Imgbb Image Uploader</h1>
+<input type="file" id="imageInput" accept="image/*">
+<button onclick="uploadImage()">Upload Image</button>
+<div id="output"></div>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>涂鸦丝印</title>
+		<style>
+			canvas {
+				border: 1px solid black;
+			}
+		</style>
+		<script>
+			let taskId = null;
+			let canvas,
+				ctx,
+				flag = false,
+				prevX = 0,
+				currX = 0,
+				prevY = 0,
+				currY = 0,
+				dot_flag = false;
+			let color = 'black'; // 涂鸦颜色
+			let parameters = {
+				size: '768*768',
+				n: 1,
+				sketch_weight: 3,
+				style: '<watercolor>',
+			};
+
+			document.addEventListener('DOMContentLoaded', function () {
+				canvas = document.getElementById('canv');
+				ctx = canvas.getContext('2d');
+				canvas.addEventListener('mousedown', mouseDown, false);
+				canvas.addEventListener('mouseup', mouseUp, false);
+				canvas.addEventListener('mousemove', mouseMove, false);
+			});
+
+			function mouseDown(e) {
+				flag = true;
+				currX = e.clientX - canvas.offsetLeft;
+				currY = e.clientY - canvas.offsetTop;
+				[prevX, prevY] = [currX, currY];
+			}
+
+			function mouseUp(e) {
+				flag = false;
+			}
+
+			function mouseMove(e) {
+				if (flag) {
+					currX = e.clientX - canvas.offsetLeft;
+					currY = e.clientY - canvas.offsetTop;
+					ctx.beginPath();
+					ctx.moveTo(prevX, prevY);
+					ctx.lineTo(currX, currY);
+					ctx.strokeStyle = color;
+					ctx.lineWidth = 2;
+					ctx.stroke();
+					[prevX, prevY] = [currX, currY];
+				}
+			}
+
+			function clearCanvas() {
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+			}
+
+			function saveCanvas() {
+				const imageStr = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream');
+				// eda.sys_FileSystem.saveFile(image, 'drawing-image.png');
+				const link = document.createElement('a');
+				link.download = 'drawing.png';
+				link.href = imageStr;
+				link.click();
+			}
+
+			function updateStyle(styleValue) {
+				parameters.style = styleValue; // 更新style值
+			}
+
+			async function sendPaintingRequest() {
+				try {
+					const prompt = document.getElementById('promptInput').value;
+					// const imageStr = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream');
+					// const imageStr = canvas.toDataURL('image/png');
+					canvas.toBlob(async (imageBlob) => {
+						const imageFile = new File([imageBlob], 'image.png');
+
+						function blobToDataURI(blob, callback) {
+							var reader = new FileReader();
+							reader.readAsDataURL(blob);
+							reader.onload = function (event) {
+								callback(event.target.result);
+							};
+						}
+
+						async function sendRequest(imageBase64) {
+							const response = await eda.sys_ClientUrl.request(
+								'https://dashscope-aliyuncs.mirror.soraharu.com/api/v1/services/aigc/image2image/image-synthesis/',
+								'POST',
+								JSON.stringify({
+									model: 'wanx-sketch-to-image-lite',
+									input: {
+										//sketch_image_url: imageBase64,
+										sketch_image_url: 'https://i.ibb.co/6XbQLVP/screenshot-20241127-161907.png',
+										prompt: prompt,
+									},
+
+									parameters: parameters,
+								}),
+								{
+									headers: {
+										'X-DashScope-Async': 'enable',
+										'Authorization': 'Bearer sk-cdcc8f184aa344b7b3554fa9f7fba3a2',
+										'Content-Type': 'application/json',
+									},
+								},
+							);
+							const responseJson = await response.json();
+							console.log(responseJson);
+							taskId = responseJson.output.task_id;
+
+							alert('绘画请求已发送，任务ID为：' + taskId);
+						}
+
+						blobToDataURI(imageFile, sendRequest);
+					}, 'image/png');
+				} catch (error) {
+					console.error('Error:', error);
+				}
+			}
+
+			async function checkResult() {
+				if (!taskId) {
+					alert('请先发送绘画请求');
+					return;
+				}
+				try {
+					const response = await eda.sys_ClientUrl.request(
+						`https://dashscope-aliyuncs.mirror.soraharu.com/api/v1/tasks/${taskId}`,
+						'GET',
+						undefined,
+						{
+							headers: {
+								'Authorization': 'Bearer sk-cdcc8f184aa344b7b3554fa9f7fba3a2',
+							},
+						},
+					);
+
+					const responseJson = await response.json();
+					console.log(responseJson);
+					const task_status = responseJson.output.task_status;
+
+					if (responseJson.output && responseJson.output.results && responseJson.output.results.length > 0) {
+						const task_url = responseJson.output.results[0].url;
+						const imageResponse = await eda.sys_ClientUrl.request(task_url, 'GET');
+						const imageBlob = await imageResponse.blob();
+						eda.sys_FileSystem.saveFile(imageBlob, task_url.split('?')[0].split('/').at(-1));
+
+						function blobToDataURI(blob, callback) {
+							var reader = new FileReader();
+							reader.readAsDataURL(blob);
+							reader.onload = function (event) {
+								callback(event.target.result);
+							};
+						}
+
+						function showImage(base64) {
+							document.getElementById('imageResult').src = base64;
+							document.getElementById('imageResult').style.display = 'block';
+						}
+
+						blobToDataURI(imageBlob, showImage);
+
+						// const link = document.createElement('a');
+						// link.href = task_url;
+						// link.download = 'generated_image.png';
+						// document.body.appendChild(link);
+						// link.click();
+						// document.body.removeChild(link);
+
+						alert('绘画完成，图片已自动下载');
+						console.log(task_url);
+					} else {
+						alert('绘画还未完成，当前状态：' + task_status);
+						console.log(task_status);
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					alert('无法获取绘画结果，请检查任务 ID 或网络连接');
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<input type="text" id="promptInput" placeholder="在这输入提示词..." />
+
+		<!-- 添加下拉框 -->
+		<select id="styleSelector" onchange="updateStyle(this.value)">
+			<option value="<3d cartoon>">3D卡通</option>
+			<option value="<anime>">二次元</option>
+			<option value="<oil painting>">油画</option>
+			<option value="<watercolor>" selected>水彩</option>
+			<option value="<flat illustration>">扁平插画</option>
+		</select>
+
+		<button onclick="sendPaintingRequest()">发送绘画请求</button>
+		<button onclick="checkResult()">查询结果</button>
+
+		<canvas id="canv" width="500" height="500"></canvas>
+		<button onclick="clearCanvas()">清空画布</button>
+		<button onclick="saveCanvas()">保存涂鸦</button>
+		<img id="imageResult" alt="Generated Image" />
+	</body>
+</html>

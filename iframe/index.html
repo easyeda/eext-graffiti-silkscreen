@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>涂鸦丝印</title>
+
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+		<style>
+			canvas {
+				display: block;
+				border-radius: 7px;
+				background-color: #ffffff;
+				position: absolute;
+				top: 15%;
+				left: 50%;
+				transform: translate(-50%);
+				width: 500px;
+				height: 500px;
+				border: 1px solid #ccc;
+				z-index: 1;
+			}
+			*,
+			*:after,
+			*:before {
+				box-sizing: border-box;
+			}
+
+			.container {
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 85%;
+				width: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.input {
+				position: absolute;
+				top: 18%;
+				left: 4%;
+				right: 0;
+				bottom: 80%;
+				display: flex;
+				align-items: center;
+				justify-content: left;
+				z-index: 3;
+				padding: 10px;
+				border-radius: 5px;
+			}
+
+			.inputkey {
+				position: absolute;
+				top: 18%;
+				left: 4%;
+				right: 0;
+				bottom: 80%;
+				display: flex;
+				align-items: center;
+				justify-content: left;
+				z-index: 2;
+				padding: 10px;
+				border-radius: 5px;
+			}
+
+			#promptInput {
+				width: 200px;
+				padding: 8px 12px;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				font-size: 14px;
+				color: #333;
+			}
+
+			#Inputkeytongyi {
+				margin-top: 1000px;
+				margin-left: 1%;
+				width: 390px;
+				padding: 8px 12px;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				font-size: 14px;
+				color: #333;
+			}
+
+			#promptInput:focus {
+				outline: none;
+				border-color: #007bff;
+				box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+			}
+
+			#styleSelector {
+				padding: 8px 12px;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				font-size: 14px;
+				color: #333;
+				background-color: #fff;
+				margin-left: 10px;
+			}
+
+			#styleSelector:focus {
+				outline: none;
+				border-color: #007bff;
+				box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+			}
+
+			body {
+				color: #303030;
+				background-color: #b3b3b31f;
+			}
+
+			.menu {
+				display: flex;
+				flex-grow: 1;
+				height: 72px;
+				max-width: 370px;
+				border-radius: 12px;
+				overflow: hidden;
+				background-color: #ffffff;
+				box-shadow:
+					0 0 1px 0 rgba(#342ead, 0.25),
+					0 15px 30px 0 rgba(#342ead, 0.1);
+			}
+
+			.menu-item {
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+				flex-grow: 1;
+				text-decoration: none;
+				&:focus,
+				&:hover {
+					outline: none;
+					.material-icons {
+						font-family: 'Material Icons';
+						color: #908af2;
+					}
+
+					.menu-item-label {
+						color: #8580e2;
+					}
+				}
+			}
+
+			.material-icons {
+				font-family: 'Material Icons Outlined';
+				display: block;
+				margin-bottom: 4px;
+				font-size: 26px;
+				color: #2c1fe4be;
+				transition: 0.25s ease;
+			}
+
+			.menu-item-label {
+				display: block;
+				font-size: 13px;
+				color: #3a339cbe;
+				transition: 0.25s ease;
+			}
+			.loader {
+				display: block;
+				--height-of-loader: 4px;
+				--loader-color: #0071e2;
+				width: 130px;
+				height: var(--height-of-loader);
+				border-radius: 30px;
+				background-color: rgba(0, 0, 0, 0.2);
+				position: relative;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				z-index: 10;
+				overflow: hidden;
+			}
+
+			.loader::before {
+				content: '';
+				position: absolute;
+				background: var(--loader-color);
+				top: 0;
+				left: 0;
+				width: 0%;
+				height: 100%;
+				border-radius: 2px;
+				animation: moving 1s ease-in-out infinite;
+			}
+
+			@keyframes moving {
+				0% {
+					width: 0%;
+					left: 0;
+				}
+				50% {
+					width: 100%;
+				}
+				100% {
+					width: 0%;
+					right: 0;
+					left: unset;
+				}
+			}
+
+			/*复选框 */
+			.checkbox-label {
+				display: flex;
+				align-items: center;
+				position: relative;
+				cursor: pointer;
+				font-size: 14px;
+				user-select: none;
+				margin-top: 1000px;
+				margin-left: 10px; /* 调整复选框的位置 */
+			}
+
+			.checkbox-label input {
+				position: absolute;
+				opacity: 0;
+				cursor: pointer;
+			}
+
+			.checkmark {
+				position: relative;
+				top: 0;
+				left: 0;
+				height: 22px;
+				width: 22px;
+				background-color: #ffffff;
+				border-radius: 5px;
+				margin-right: 3px; /* 在复选框和文字之间添加间距 */
+			}
+
+			.checkbox-label:hover input ~ .checkmark {
+				background-color: #e6e6e6;
+			}
+
+			.checkbox-label input:checked ~ .checkmark {
+				background-color: #2196f3;
+			}
+
+			.checkmark:after {
+				content: '';
+				position: absolute;
+				display: none;
+			}
+
+			.checkbox-label input:checked ~ .checkmark:after {
+				display: block;
+			}
+
+			.checkbox-label .checkmark:after {
+				left: 8px;
+				top: 4px;
+				width: 6px;
+				height: 12px;
+				border: solid white;
+				border-width: 0 3px 3px 0;
+				transform: rotate(45deg);
+			}
+
+			/* 添加复选框文字样式 */
+			.checkbox-text {
+				font-size: 12px;
+				color: #333;
+			}
+			.menu-item-icon {
+				display: block;
+				width: 26px;
+				height: 26px;
+				fill: #2c1fe4be; /* 图标颜色 */
+				margin-bottom: 4px;
+				transition: 0.25s ease;
+			}
+
+			.menu-item:hover .menu-item-icon {
+				fill: #342ead;
+			}
+		</style>
+	</head>
+	<body>
+		<script>
+			var autoDownload;
+			let canvas, ctx;
+			let history = [];
+			let imgURL;
+			let taskId;
+			let prompts;
+			let flagUpload = false;
+			let parameters = {
+				size: '768*768',
+				n: 1,
+				sketch_weight: 10,
+				style: '<flat illustration>',
+			};
+
+			let tongyiKeyInput;
+
+			document.addEventListener('DOMContentLoaded', function () {
+				canvas = document.getElementById('drawingCanvas');
+
+				canvas.width = 500;
+				canvas.height = 500;
+
+				ctx = canvas.getContext('2d');
+				ctx.fillStyle = '#FFFFFF';
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+				canvas.addEventListener('mousedown', mouseDown, false);
+				canvas.addEventListener('mouseup', mouseUp, false);
+				canvas.addEventListener('mouseout', mouseOut, false);
+				canvas.addEventListener('mousemove', mouseMove, false);
+
+				// 检查是否有存储的数据
+				const storedTongyiKey = eda.sys_Storage.getExtensionUserConfig('tongyiKey');
+				const storedCanvasData = eda.sys_Storage.getExtensionUserConfig('canvasData');
+
+				if (storedTongyiKey) {
+					document.getElementById('Inputkeytongyi').value = storedTongyiKey;
+				}
+				if (storedCanvasData) {
+					const img = new Image();
+					img.onload = function () {
+						ctx.drawImage(img, 0, 0);
+					};
+					img.src = storedCanvasData;
+				}
+			});
+
+			let isDrawing = false;
+
+			function mouseDown(e) {
+				isDrawing = true;
+				const rect = canvas.getBoundingClientRect();
+				ctx.lineWidth = 2;
+				ctx.strokeStyle = 'black';
+				ctx.beginPath();
+				ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+			}
+
+			function mouseUp() {
+				isDrawing = false;
+				saveCanvasState();
+			}
+
+			function mouseOut() {
+				isDrawing = false;
+			}
+
+			function mouseMove(e) {
+				if (isDrawing) {
+					const rect = canvas.getBoundingClientRect();
+					ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+					ctx.stroke();
+					ctx.beginPath();
+					ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+				}
+			}
+
+			function clearCanvas() {
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+				ctx.fillStyle = '#FFFFFF';
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+				history = [];
+
+				eda.sys_Storage.deleteExtensionUserConfig('canvasData');
+			}
+
+			function save() {
+				const prompt = document.getElementById('promptInput').value.trim(); // 去空格提示词
+				const filename = prompt ? `${prompt}_scrawl.png` : 'scrawl.png'; // 提示词或默认
+				const dataURL = canvas.toDataURL('image/png');
+				const link = document.createElement('a');
+				link.download = filename;
+				link.href = dataURL;
+				link.click();
+			}
+
+			function importImage() {
+				document.getElementById('importImageInput').click(); // 触发文件输入的点击事件
+			}
+
+			function handleFileChange(event) {
+				const file = event.target.files[0];
+				if (file) {
+					const reader = new FileReader();
+					reader.onload = function (e) {
+						const img = new Image();
+						img.onload = function () {
+							const canvas = document.getElementById('drawingCanvas');
+							const ctx = canvas.getContext('2d');
+							const width = img.width;
+							const height = img.height;
+							ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
+							ctx.drawImage(img, 0, 0, width, height); // 绘制图片
+
+							const filename = file.name.split('_scrawl')[0]; // 提取_scrawl前的部分
+							document.getElementById('promptInput').value = filename; // 填入输入框
+						};
+						img.src = e.target.result;
+					};
+					reader.readAsDataURL(file);
+				}
+			}
+
+			document.addEventListener('DOMContentLoaded', function () {
+				var fileInput = document.getElementById('importImageInput');
+				if (fileInput) {
+					fileInput.addEventListener('change', handleFileChange);
+				} else {
+					console.error('File input element with id "importImageInput" not found.');
+				}
+			});
+
+			function undoCanvas() {
+				if (history.length > 0) {
+					history.pop();
+					if (history.length > 0) {
+						ctx.putImageData(history[history.length - 1], 0, 0);
+					} else {
+						clearCanvas();
+					}
+				}
+			}
+
+			function saveCanvasState() {
+				history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+			}
+
+			function updateStyle(styleValue) {
+				parameters.style = styleValue;
+			}
+
+			async function uploadCanvasWithValidation() {
+				var tongyiKey = document.getElementById('Inputkeytongyi').value;
+				autoDownload = document.getElementById('autoDownloadCheckbox').checked; // 获取复选框状态
+				if (!tongyiKey) {
+					eda.sys_ToastMessage.showMessage('通义Key不能为空', 0);
+				} else {
+					eda.sys_Storage.setExtensionUserConfig('tongyiKey', tongyiKey);
+					eda.sys_ToastMessage.showMessage('已记录 Key 数据于本地', 3);
+					// 存储当前画布内容
+					const canvasData = canvas.toDataURL('image/png');
+					eda.sys_Storage.setExtensionUserConfig('canvasData', canvasData);
+					await uploadCanvas(); // 传递自动下载参数到上传函数
+				}
+			}
+
+			async function uploadCanvas() {
+				try {
+					const dataURL = canvas.toDataURL('image/png'); // 将画布内容导出为base64编码的PNG图片
+					const formData = new FormData();
+					// formData.append('image', dataURL.replace(/^data:image\/(png|jpg);base64,/, ''));
+					formData.append('base64image', dataURL);
+					// const response = await fetch(`https://api.imgbb.com/1/upload?expiration=600&key=${imgKeyInput}`, {
+					// 	method: 'POST',
+					// 	body: formData,
+					// });
+
+					const response = await eda.sys_ClientUrl.request(`https://image-transfer-station.soraharu.app/`, 'POST', formData, {});
+
+					const data = await response.json();
+					console.log(data);
+
+					imgURL = data.data.imageUrl;
+
+					console.log(imgURL);
+					// if (!response.ok) {
+					// 	throw new Error('Request failed with status ' + response.status);
+					// }
+					// if (!data.success) {
+					// 	throw new Error(data.error || 'Unknown error');
+					// }
+					// if (response.ok && data.success) {
+					// 	imgURL = data.data.display_url;
+
+					// 	//alert(`图库上传请求已发送\n持续时间${data.data.expiration}秒\n图片URL为${data.data.display_url}`);
+					// 	eda.sys_ToastMessage.showMessage(`图片上传成功！`, 3);
+					// 	console.log(`图库上传请求已发送,持续时间${data.data.expiration}秒,图片URL为${data.data.display_url}`);
+					sendRequest();
+					// } else {
+					// 	console.error('Error:', data.error || 'Unknown error');
+					// }
+				} catch (error) {
+					console.error('Upload failed:', error);
+					eda.sys_ToastMessage.showMessage(`图片上传失败，请检查外部交互是否开启`, 0);
+				}
+			}
+
+			function showLoading() {
+				document.getElementById('loadingIcon').style.display = 'block';
+			}
+
+			function hideLoading() {
+				document.getElementById('loadingIcon').style.display = 'none';
+			}
+
+			async function sendRequest() {
+				try {
+					tongyiKeyInput = document.getElementById('Inputkeytongyi').value;
+					prompts = document.getElementById('promptInput').value;
+					const response = await eda.sys_ClientUrl.request(
+						'https://dashscope-aliyuncs.mirror.soraharu.com/api/v1/services/aigc/image2image/image-synthesis/',
+						'POST',
+						JSON.stringify({
+							model: 'wanx-sketch-to-image-lite',
+							input: {
+								sketch_image_url: imgURL,
+								prompt: prompts,
+							},
+
+							parameters: parameters,
+						}),
+						{
+							headers: {
+								'X-DashScope-Async': 'enable',
+								'Authorization': 'Bearer ' + tongyiKeyInput,
+								'Content-Type': 'application/json',
+							},
+						},
+					);
+					const responseJson = await response.json();
+					console.log(responseJson);
+					taskId = responseJson.output.task_id;
+
+					//alert(`绘画请求已发送\n 任务ID为${taskId}`);
+					eda.sys_ToastMessage.showMessage(`图片生成中！`, 3);
+					console.log(`绘画请求已发送\n 任务ID为${taskId}`);
+					showLoading();
+					flagUpload = true;
+				} catch (error) {
+					console.error('Error:', error);
+					//alert('图生图接口调用失败');
+					eda.sys_ToastMessage.showMessage('图生图接口调用失败', 0);
+				}
+			}
+
+			async function checkResult() {
+				setTimeout(() => checkResult(), 4000);
+				if (flagUpload === true) {
+					try {
+						const response = await eda.sys_ClientUrl.request(
+							`https://dashscope-aliyuncs.mirror.soraharu.com/api/v1/tasks/${taskId}`,
+							'GET',
+							undefined,
+							{
+								headers: {
+									'Authorization': 'Bearer ' + tongyiKeyInput,
+								},
+							},
+						);
+
+						const responseJson = await response.json();
+						console.log(responseJson);
+						const task_status = responseJson.output.task_status;
+
+						if (responseJson.output && responseJson.output.results && responseJson.output.results.length > 0) {
+							const task_url = responseJson.output.results[0].url;
+							const imageResponse = await eda.sys_ClientUrl.request(task_url, 'GET');
+							const imageBlob = await imageResponse.blob();
+							if (autoDownload) {
+								eda.sys_FileSystem.saveFile(imageBlob, task_url.split('?')[0].split('/').at(-1));
+								eda.sys_ToastMessage.showMessage('图片生成成功，已放置在画布并保存！', 3);
+								console.log('自动下载');
+							} else {
+								eda.sys_ToastMessage.showMessage('图片生成成功，已放置在画布！', 3);
+								console.log('未自动下载');
+							}
+
+							const file = imageBlob;
+							const reader = new FileReader();
+							reader.readAsDataURL(file);
+							reader.onload = function (e) {
+								console.log(reader.result);
+								eda.pcb_PrimitiveObject.create(3, -984.25, 984.25, reader.result, 1968.5, 1968.5);
+							};
+
+							console.log(task_url);
+							flagUpload = false;
+							hideLoading();
+						} else {
+							console.log(task_status);
+						}
+					} catch (error) {
+						console.error('Error:', error);
+						//alert('无法获取绘画结果，请检查任务 ID 或网络连接');
+					}
+				} else {
+					console.log('未开始上传');
+				}
+			}
+
+			setTimeout(() => checkResult(), 4000);
+		</script>
+		<svg xmlns="http://www.w3.org/2000/svg" style="display: none">
+			<!-- 画笔 -->
+			<symbol id="icon-brush" viewBox="0 0 1024 1024">
+				<path
+					d="M819 190.3c-26.7-26.4-70.1-26.4-96.8 0L437.9 471.1c-3.8 3.8-3.9 10 0 13.8l82.4 82.4c3.8 3.8 9.9 3.8 13.7 0l285-281.5c26.8-26.3 26.8-69.1 0-95.5zM404.9 517.2c-3.8-3.8-9.9-3.8-13.7 0l-63 62.1c-1.8 1.8-4.3 2.8-6.8 2.8-48.1-0.1-112.4 18.7-140.8 110.7-0.1 0.4-0.3 0.8-0.4 1.2-14.1 31.3-42.2 41.9-61.2 45.5-7.7 1.5-10.7 11-5 16.5 118.1 114.1 251.5 42.3 282.9 10.5 27.2-27.6 32.3-61 30.2-88.6-0.2-2.9 0.8-5.7 2.9-7.7l57.5-56.7c3.8-3.8 3.9-10 0-13.8l-82.6-82.5z m-40.3 217.4c-21.4 19.8-112.7 62.7-173.2 29.6-5.6-3.1-6.7-10.6-2.4-15.2 7.5-7.8 18.5-21.2 27.8-40.4 0.1-0.3 0.2-0.5 0.4-0.8 33.3-87.9 110.1-86.6 127.7-85.2 2.3 0.2 4.4 1.2 6 2.8l29.9 29.5c0.2 0.4 24 42.4-16.2 79.7z"
+					fill="#070101"
+				/>
+			</symbol>
+			<!-- 保存 -->
+			<symbol id="icon-save" viewBox="0 0 1024 1024">
+				<path
+					d="M626.1 137.4c-3 0-329.4-0.7-329.4-0.7-52 0-94.1 42.1-94.1 94.1v564.7c0 52 42.1 94.1 94.1 94.1h423.5c52 0 94.1-42.1 94.1-94.1V325L626.1 137.4z m23.6 564H367.3c-13 0-23.5-10.5-23.5-23.5s10.5-23.5 23.5-23.5h282.3c13 0 23.5 10.5 23.5 23.5 0.1 13-10.4 23.5-23.4 23.5z m0-141.1H367.3c-13 0-23.5-10.5-23.5-23.5s10.5-23.5 23.5-23.5h282.3c13 0 23.5 10.5 23.5 23.5 0.1 12.9-10.4 23.5-23.4 23.5zM673.2 325c-26 0-47.1-21.1-47.1-47.1v-94.1L767.3 325h-94.1z"
+					fill="#070000"
+				/>
+			</symbol>
+			<!-- 导入 -->
+			<symbol id="icon-import" viewBox="0 0 1024 1024">
+				<path
+					d="M341.6 383.2c23.6 0 42.7-19.1 42.7-42.7s-19.1-42.7-42.7-42.7-42.7 19.1-42.7 42.7 19.1 42.7 42.7 42.7z m426.8-213.4H256.2c-47.2 0-85.4 38.2-85.4 85.4v512.3c0 47.2 38.2 85.4 85.4 85.4h512.3c47.2 0 85.4-38.2 85.4-85.4V255.2c-0.1-47.2-38.3-85.4-85.5-85.4z m-426.8 85.4c47.2 0 85.4 38.2 85.4 85.4S388.8 426 341.6 426s-85.4-38.2-85.4-85.4 38.2-85.4 85.4-85.4z m-85.4 554.9c-23.6 0-42.7-19.1-42.7-42.7v-20.1l169.6-151.9L597.7 810H256.2z m554.9-42.7c0 23.6-19.1 42.7-42.7 42.7H658.1L500.9 650.8l182.2-182.2 128.1 128.1v170.7z"
+					fill="#070000"
+				/>
+			</symbol>
+			<!-- 清空 -->
+			<symbol id="icon-clear" viewBox="0 0 1024 1024">
+				<path
+					d="M510.7 129C299 129 127.4 300.6 127.4 512.3c0 211.7 171.6 383.3 383.3 383.3C722.4 895.6 894 724 894 512.3 894 300.6 722.4 129 510.7 129z m135.5 485c9.4 9.4 9.4 24.5 0 33.9-9.4 9.4-24.5 9.4-33.9 0L510.8 546.3 408.6 648.5c-9.4 9.4-24.7 9.4-34.1 0-9.4-9.4-9.4-24.7 0-34.1l102.2-102.2-101.5-101.5c-9.4-9.4-9.4-24.5 0-33.9 9.4-9.4 24.5-9.4 33.9 0l101.5 101.5 103-103c9.4-9.4 24.7-9.4 34.1 0 9.4 9.4 9.4 24.7 0 34.1l-103 103L646.2 614z"
+					fill="#0A0909"
+				/>
+			</symbol>
+			<!-- 撤回 -->
+			<symbol id="icon-undo" viewBox="0 0 1024 1024">
+				<path
+					d="M468.1 320.3V158.7c0.9-8.1-1.3-16.4-7.5-22.7-10.9-10.8-28.4-10.8-39.3 0L147.6 436.1c-5.8 5.7-8.3 13.4-7.9 20.9-0.4 7.5 2.1 15.1 7.9 20.9l272.2 298.4c10.2 8.7 28.8 13.6 40.8 1.6 6.2-6.2 8.9-11.4 8-19.5V594c180.8 0 344.4 130.2 376.8 301.6 21.9-50.2 34.1-105.6 34.1-163.9 0.1-227.2-184.1-411.4-411.4-411.4z"
+					fill="#070101"
+				/>
+			</symbol>
+			<!-- 生成 -->
+			<symbol id="icon-generate" viewBox="0 0 1024 1024">
+				<path
+					d="M679.6 876.3h-51.5v-50H422v50h-51.5c-14.2 0-25.8 11.2-25.8 25s11.5 25 25.8 25h309c14.2 0 25.8-11.2 25.8-25s-11.5-25-25.7-25z m128.7-750.2H216c-56.9 0-103 44.8-103 100v350.1h798.3V226.1c0-55.3-46.1-100-103-100zM113 676.2c0 55.2 46.1 100 103 100h592.3c56.9 0 103-44.8 103-100v-50H113v50z"
+					fill="#020000"
+				/>
+			</symbol>
+		</svg>
+		<div class="container">
+			<nav class="menu">
+				<a href="#" class="menu-item" onclick="selectBrush()">
+					<svg class="menu-item-icon" aria-hidden="true">
+						<use href="#icon-brush"></use>
+					</svg>
+					<span class="menu-item-label">画笔</span>
+				</a>
+				<a href="#" class="menu-item" onclick="save()">
+					<svg class="menu-item-icon" aria-hidden="true">
+						<use href="#icon-save"></use>
+					</svg>
+					<span class="menu-item-label">保存</span>
+				</a>
+				<a href="#" class="menu-item" onclick="importImage()">
+					<svg class="menu-item-icon" aria-hidden="true">
+						<use href="#icon-import"></use>
+					</svg>
+					<span class="menu-item-label">导入</span>
+				</a>
+				<a href="#" class="menu-item" onclick="clearCanvas()">
+					<svg class="menu-item-icon" aria-hidden="true">
+						<use href="#icon-clear"></use>
+					</svg>
+					<span class="menu-item-label">清空</span>
+				</a>
+				<a href="#" class="menu-item" onclick="undoCanvas()">
+					<svg class="menu-item-icon" aria-hidden="true">
+						<use href="#icon-undo"></use>
+					</svg>
+					<span class="menu-item-label">撤回</span>
+				</a>
+				<a href="#" class="menu-item" onclick="uploadCanvasWithValidation()">
+					<svg class="menu-item-icon" aria-hidden="true">
+						<use href="#icon-generate"></use>
+					</svg>
+					<span class="menu-item-label">生成</span>
+				</a>
+			</nav>
+		</div>
+		<div class="input">
+			<input type="text" id="promptInput" placeholder="在这输入提示词..." />
+			<select id="styleSelector" onchange="updateStyle(this.value)">
+				<option value="<3d cartoon>">3D卡通</option>
+				<option value="<anime>">二次元</option>
+				<option value="<oil painting>">油画</option>
+				<option value="<watercolor>">水彩</option>
+				<option value="<flat illustration>" selected>扁平插画</option>
+			</select>
+		</div>
+		<div class="inputkey">
+			<input type="text" id="Inputkeytongyi" placeholder="通义Key..." required />
+			<label class="checkbox-label">
+				<input type="checkbox" id="autoDownloadCheckbox" />
+				<span class="checkmark"></span>
+				<span class="checkbox-text">保存图片</span>
+			</label>
+			<input type="file" id="importImageInput" accept="image/*" style="display: none" />
+		</div>
+		<canvas id="drawingCanvas"></canvas>
+		<div id="loadingIcon" class="loader" style="display: none"></div>
+	</body>
+</html>

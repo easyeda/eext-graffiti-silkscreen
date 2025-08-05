@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>涂鸦丝印</title>
+
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+		<style>
+			canvas {
+				display: block;
+				border-radius: 7px;
+				background-color: #ffffff;
+				position: absolute;
+				top: 15%;
+				left: 50%;
+				transform: translate(-50%);
+				width: 500px;
+				height: 500px;
+				border: 1px solid #ccc;
+			}
+			*,
+			*:after,
+			*:before {
+				box-sizing: border-box;
+			}
+
+			.container {
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 85%;
+				width: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			body {
+				color: #303030;
+				background-color: #b3b3b31f;
+			}
+
+			.menu {
+				display: flex;
+				flex-grow: 1;
+				height: 72px;
+				max-width: 370px;
+				border-radius: 12px;
+				overflow: hidden;
+				background-color: #ffffff;
+				box-shadow:
+					0 0 1px 0 rgba(#342ead, 0.25),
+					0 15px 30px 0 rgba(#342ead, 0.1);
+			}
+
+			.menu-item {
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+				flex-grow: 1;
+				text-decoration: none;
+				&:focus,
+				&:hover {
+					outline: none;
+					.material-icons {
+						font-family: 'Material Icons';
+						color: #342ead;
+					}
+
+					.menu-item-label {
+						color: #342ead;
+					}
+				}
+			}
+
+			.material-icons {
+				font-family: 'Material Icons Outlined';
+				display: block;
+				margin-bottom: 4px;
+				font-size: 26px;
+				color: mix(#fff, #342ead, 60%);
+				transition: 0.25s ease;
+			}
+
+			.menu-item-label {
+				display: block;
+				font-size: 13px;
+				color: mix(#fff, #342ead, 70%);
+				transition: 0.25s ease;
+			}
+		</style>
+	</head>
+	<body>
+		<script>
+			let canvas, ctx;
+			let history = [];
+
+			document.addEventListener('DOMContentLoaded', function () {
+				canvas = document.getElementById('drawingCanvas');
+				canvas.width = 500;
+				canvas.height = 500;
+
+				ctx = canvas.getContext('2d');
+				ctx.fillStyle = '#FFFFFF';
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+				canvas.addEventListener('mousedown', mouseDown, false);
+				canvas.addEventListener('mouseup', mouseUp, false);
+				canvas.addEventListener('mouseout', mouseOut, false);
+				canvas.addEventListener('mousemove', mouseMove, false);
+			});
+
+			let isDrawing = false;
+
+			function mouseDown(e) {
+				isDrawing = true;
+				const rect = canvas.getBoundingClientRect();
+				ctx.lineWidth = 4;
+				ctx.strokeStyle = 'black';
+				ctx.beginPath();
+				ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+			}
+
+			function mouseUp() {
+				isDrawing = false;
+				saveCanvasState();
+			}
+
+			function mouseOut() {
+				isDrawing = false;
+			}
+
+			function mouseMove(e) {
+				if (isDrawing) {
+					const rect = canvas.getBoundingClientRect();
+					ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+					ctx.stroke();
+					ctx.beginPath();
+					ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+				}
+			}
+
+			function clearCanvas() {
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+				ctx.fillStyle = '#FFFFFF';
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+				history = [];
+			}
+
+			function save() {
+				const dataURL = canvas.toDataURL('image/png');
+				const link = document.createElement('a');
+				link.download = 'scrawl.png';
+				link.href = dataURL;
+				link.click();
+			}
+
+			function undoCanvas() {
+				if (history.length > 0) {
+					history.pop();
+					if (history.length > 0) {
+						ctx.putImageData(history[history.length - 1], 0, 0);
+					} else {
+						clearCanvas();
+					}
+				}
+			}
+
+			function saveCanvasState() {
+				history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+			}
+
+			async function uploadCanvas() {
+				const dataURL = canvas.toDataURL('image/png'); // 将画布内容导出为base64编码的PNG图片
+				const formData = new FormData();
+				formData.append('image', dataURL.replace(/^data:image\/(png|jpg);base64,/, ''));
+
+				try {
+					const response = await fetch(`https://api.imgbb.com/1/upload?expiration=600&key=93ecff6c249ca51c6ee0fb5a4b7d7c8a`, {
+						method: 'POST',
+						body: formData,
+					});
+					const data = await response.json();
+					if (response.ok && data.success) {
+						document.getElementById('output').innerHTML = `
+						<img src="${data.data.url}" alt="Uploaded Image" />
+						<p>Viewer URL: <a href="${data.data.url_viewer}" target="_blank">${data.data.url_viewer}</a></p>
+						<p>Display URL: <a href="${data.data.display_url}" target="_blank">${data.data.display_url}</a></p>
+						<p>Width: ${data.data.width}</p>
+						<p>Height: ${data.data.height}</p>
+						<p>Size: ${data.data.size}</p>
+						<p>Uploaded at: ${data.data.time}</p>
+						<p>Expiration: ${data.data.expiration}</p>
+						<p>Delete URL: <a href="${data.data.delete_url}" target="_blank">Delete Image</a></p>
+					`;
+						console.log('Image uploaded successfully:', data);
+					} else {
+						console.error('Error:', data.error || 'Unknown error');
+					}
+				} catch (error) {
+					console.error('Upload failed:', error);
+				}
+			}
+		</script>
+
+		<div class="container">
+			<nav class="menu">
+				<a href="#" class="menu-item" onclick="selectBrush()">
+					<span class="material-icons">brush</span>
+					<span class="menu-item-label">Brush</span>
+				</a>
+				<a href="#" class="menu-item" onclick="save()">
+					<span class="material-icons">save</span>
+					<span class="menu-item-label">Save</span>
+				</a>
+				<a href="#" class="menu-item" onclick="clearCanvas()">
+					<span class="material-icons">delete</span>
+					<span class="menu-item-label">Clear</span>
+				</a>
+				<a href="#" class="menu-item" onclick="undoCanvas()">
+					<span class="material-icons">undo</span>
+					<span class="menu-item-label">Undo</span>
+				</a>
+				<a href="#" class="menu-item" onclick="uploadCanvas()">
+					<span class="material-icons">add_box</span>
+					<span class="menu-item-label">Upload</span>
+				</a>
+			</nav>
+			<div id="output"></div>
+		</div>
+		<canvas id="drawingCanvas"></canvas>
+	</body>
+</html>
