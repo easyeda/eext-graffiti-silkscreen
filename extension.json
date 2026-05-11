@@ -1,82 +1,85 @@
 {
-	"name": "graffiti-silkscreen",
-	"uuid": "0feb48269e444afa89eea4750e30c9cb",
-	"displayName": "涂鸦丝印",
-	"description": "制作简单Logo，背景元素，满足用户创作彩色丝印想法",
-	"version": "1.4.3",
-	"publisher": "JLCEDA",
-	"engines": {
-		"eda": "^2.2.34"
-	},
-	"license": "MIT License",
-	"repository": {
-		"type": "extension-store",
-		"url": ""
-	},
-	"categories": "PCB",
-	"keywords": ["PCB", "Silkscreen"],
-	"images": {
-		"logo": "./images/logo.png"
-	},
-	"homepage": "https://github.com/easyeda/eext-graffiti-silkscreen",
-	"bugs": "https://github.com/easyeda/eext-graffiti-silkscreen/issues",
-	"activationEvents": {},
-	"entry": "./dist/index",
-	"dependentExtensions": {},
-	"headerMenus": {
-		"home": [
-			{
-				"id": "tuYa",
-				"title": "丝印",
-				"menuItems": [
-					{
-						"id": "tuYaWindow",
-						"title": "涂鸦丝印",
-						"registerFn": "tuYaWindow"
-					},
-					{
-						"id": "About...",
-						"title": "关于...",
-						"registerFn": "about"
-					}
-				]
-			}
-		],
-		"sch": [
-			{
-				"id": "tuYa",
-				"title": "丝印",
-				"menuItems": [
-					{
-						"id": "tuYaWindow",
-						"title": "涂鸦丝印",
-						"registerFn": "tuYaWindow"
-					},
-					{
-						"id": "About...",
-						"title": "关于...",
-						"registerFn": "about"
-					}
-				]
-			}
-		],
-		"pcb": [
-			{
-				"id": "tuYa",
-				"title": "丝印",
-				"menuItems": [
-					{
-						"id": "tuYaWindow",
-						"title": "涂鸦丝印",
-						"registerFn": "tuYaWindow"
-					},
-					{
-						"id": "About...",
-						"title": "关于...",
-						"registerFn": "about"
-					}
-				]
-			}
-		]
-	}
+  "name": "graffiti-silkscreen",
+  "uuid": "0feb48269e444afa89eea4750e30c9cb",
+  "displayName": "涂鸦丝印",
+  "description": "制作简单Logo，背景元素，满足用户创作彩色丝印想法",
+  "version": "1.4.3",
+  "publisher": "EasyEDA",
+  "engines": {
+    "eda": "^2.2.34"
+  },
+  "license": "MIT License",
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/easyeda/eext-graffiti-silkscreen"
+  },
+  "categories": "PCB",
+  "keywords": [
+    "PCB",
+    "Silkscreen"
+  ],
+  "images": {
+    "logo": "./images/logo.png"
+  },
+  "homepage": "https://github.com/easyeda",
+  "bugs": "https://github.com/easyeda/eext-graffiti-silkscreen/issues",
+  "activationEvents": {},
+  "entry": "./dist/index",
+  "dependentExtensions": {},
+  "headerMenus": {
+    "home": [
+      {
+        "id": "tuYa",
+        "title": "丝印",
+        "menuItems": [
+          {
+            "id": "tuYaWindow",
+            "title": "涂鸦丝印",
+            "registerFn": "tuYaWindow"
+          },
+          {
+            "id": "About...",
+            "title": "关于...",
+            "registerFn": "about"
+          }
+        ]
+      }
+    ],
+    "sch": [
+      {
+        "id": "tuYa",
+        "title": "丝印",
+        "menuItems": [
+          {
+            "id": "tuYaWindow",
+            "title": "涂鸦丝印",
+            "registerFn": "tuYaWindow"
+          },
+          {
+            "id": "About...",
+            "title": "关于...",
+            "registerFn": "about"
+          }
+        ]
+      }
+    ],
+    "pcb": [
+      {
+        "id": "tuYa",
+        "title": "丝印",
+        "menuItems": [
+          {
+            "id": "tuYaWindow",
+            "title": "涂鸦丝印",
+            "registerFn": "tuYaWindow"
+          },
+          {
+            "id": "About...",
+            "title": "关于...",
+            "registerFn": "about"
+          }
+        ]
+      }
+    ]
+  }
 }
