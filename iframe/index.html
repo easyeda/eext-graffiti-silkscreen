@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>涂鸦丝印</title>
+		<title></title>
 
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
@@ -284,6 +284,29 @@
 	</head>
 	<body>
 		<script>
+			var edaObj = (typeof eda !== 'undefined') ? eda : (window.parent && window.parent.eda);
+			function t(tag, ...args) {
+				if (edaObj && edaObj.sys_I18n) return edaObj.sys_I18n.text(tag, undefined, undefined, ...args);
+				return tag;
+			}
+
+			document.addEventListener('DOMContentLoaded', function () {
+				document.title = t('Graffiti-Silkscreen');
+				var menuLabels = document.querySelectorAll('.menu-item-label');
+				var labelTags = ['Brush', 'Save', 'Import', 'Clear', 'Undo', 'Generate'];
+				for (var i = 0; i < menuLabels.length; i++) {
+					menuLabels[i].textContent = t(labelTags[i]);
+				}
+				document.getElementById('promptInput').placeholder = t('Enter prompt here...');
+				var styleOptions = document.getElementById('styleSelector').options;
+				var styleTags = ['3D Cartoon', 'Anime', 'Oil Painting', 'Watercolor', 'Flat Illustration'];
+				for (var j = 0; j < styleOptions.length; j++) {
+					styleOptions[j].textContent = t(styleTags[j]);
+				}
+				document.getElementById('Inputkeytongyi').placeholder = t('Tongyi Key...');
+				document.querySelector('.checkbox-text').textContent = t('Save Image');
+			});
+
 			var autoDownload;
 			let canvas, ctx;
 			let history = [];
@@ -440,10 +463,10 @@
 				var tongyiKey = document.getElementById('Inputkeytongyi').value;
 				autoDownload = document.getElementById('autoDownloadCheckbox').checked; // 获取复选框状态
 				if (!tongyiKey) {
-					eda.sys_ToastMessage.showMessage('通义Key不能为空', 0);
+					eda.sys_ToastMessage.showMessage(t('Tongyi Key cannot be empty'), 0);
 				} else {
 					eda.sys_Storage.setExtensionUserConfig('tongyiKey', tongyiKey);
-					eda.sys_ToastMessage.showMessage('已记录 Key 数据于本地', 3);
+					eda.sys_ToastMessage.showMessage(t('Key data saved locally'), 3);
 					// 存储当前画布内容
 					const canvasData = canvas.toDataURL('image/png');
 					eda.sys_Storage.setExtensionUserConfig('canvasData', canvasData);
@@ -488,7 +511,7 @@
 					// }
 				} catch (error) {
 					console.error('Upload failed:', error);
-					eda.sys_ToastMessage.showMessage(`图片上传失败，请检查外部交互是否开启`, 0);
+					eda.sys_ToastMessage.showMessage(t('Image upload failed, please check if external interaction is enabled'), 0);
 				}
 			}
 
@@ -529,14 +552,14 @@
 					taskId = responseJson.output.task_id;
 
 					//alert(`绘画请求已发送\n 任务ID为${taskId}`);
-					eda.sys_ToastMessage.showMessage(`图片生成中！`, 3);
+					eda.sys_ToastMessage.showMessage(t('Generating image...'), 3);
 					console.log(`绘画请求已发送\n 任务ID为${taskId}`);
 					showLoading();
 					flagUpload = true;
 				} catch (error) {
 					console.error('Error:', error);
 					//alert('图生图接口调用失败');
-					eda.sys_ToastMessage.showMessage('图生图接口调用失败', 0);
+					eda.sys_ToastMessage.showMessage(t('Image-to-image API call failed'), 0);
 				}
 			}
 
@@ -565,10 +588,10 @@
 							const imageBlob = await imageResponse.blob();
 							if (autoDownload) {
 								eda.sys_FileSystem.saveFile(imageBlob, task_url.split('?')[0].split('/').at(-1));
-								eda.sys_ToastMessage.showMessage('图片生成成功，已放置在画布并保存！', 3);
+								eda.sys_ToastMessage.showMessage(t('Image generated successfully, placed on canvas and saved!'), 3);
 								console.log('自动下载');
 							} else {
-								eda.sys_ToastMessage.showMessage('图片生成成功，已放置在画布！', 3);
+								eda.sys_ToastMessage.showMessage(t('Image generated successfully, placed on canvas!'), 3);
 								console.log('未自动下载');
 							}
 
@@ -647,56 +670,56 @@
 					<svg class="menu-item-icon" aria-hidden="true">
 						<use href="#icon-brush"></use>
 					</svg>
-					<span class="menu-item-label">画笔</span>
+					<span class="menu-item-label"></span>
 				</a>
 				<a href="#" class="menu-item" onclick="save()">
 					<svg class="menu-item-icon" aria-hidden="true">
 						<use href="#icon-save"></use>
 					</svg>
-					<span class="menu-item-label">保存</span>
+					<span class="menu-item-label"></span>
 				</a>
 				<a href="#" class="menu-item" onclick="importImage()">
 					<svg class="menu-item-icon" aria-hidden="true">
 						<use href="#icon-import"></use>
 					</svg>
-					<span class="menu-item-label">导入</span>
+					<span class="menu-item-label"></span>
 				</a>
 				<a href="#" class="menu-item" onclick="clearCanvas()">
 					<svg class="menu-item-icon" aria-hidden="true">
 						<use href="#icon-clear"></use>
 					</svg>
-					<span class="menu-item-label">清空</span>
+					<span class="menu-item-label"></span>
 				</a>
 				<a href="#" class="menu-item" onclick="undoCanvas()">
 					<svg class="menu-item-icon" aria-hidden="true">
 						<use href="#icon-undo"></use>
 					</svg>
-					<span class="menu-item-label">撤回</span>
+					<span class="menu-item-label"></span>
 				</a>
 				<a href="#" class="menu-item" onclick="uploadCanvasWithValidation()">
 					<svg class="menu-item-icon" aria-hidden="true">
 						<use href="#icon-generate"></use>
 					</svg>
-					<span class="menu-item-label">生成</span>
+					<span class="menu-item-label"></span>
 				</a>
 			</nav>
 		</div>
 		<div class="input">
-			<input type="text" id="promptInput" placeholder="在这输入提示词..." />
+			<input type="text" id="promptInput" placeholder="" />
 			<select id="styleSelector" onchange="updateStyle(this.value)">
-				<option value="<3d cartoon>">3D卡通</option>
-				<option value="<anime>">二次元</option>
-				<option value="<oil painting>">油画</option>
-				<option value="<watercolor>">水彩</option>
-				<option value="<flat illustration>" selected>扁平插画</option>
+				<option value="<3d cartoon>"></option>
+				<option value="<anime>"></option>
+				<option value="<oil painting>"></option>
+				<option value="<watercolor>"></option>
+				<option value="<flat illustration>" selected></option>
 			</select>
 		</div>
 		<div class="inputkey">
-			<input type="text" id="Inputkeytongyi" placeholder="通义Key..." required />
+			<input type="text" id="Inputkeytongyi" placeholder="" required />
 			<label class="checkbox-label">
 				<input type="checkbox" id="autoDownloadCheckbox" />
 				<span class="checkmark"></span>
-				<span class="checkbox-text">保存图片</span>
+				<span class="checkbox-text"></span>
 			</label>
 			<input type="file" id="importImageInput" accept="image/*" style="display: none" />
 		</div>
